@@ -1,0 +1,152 @@
+2026-02-25T21:21:08.6029314Z State: Starting, Action: EstablishingSiteNetworks, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:21:10.3763105Z State: Starting, Action: StartingSiteContainers, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:21:10.3769197Z Container start method called.
+2026-02-25T21:21:10.3789875Z State: Starting, Action: PullingImage, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pulling image 10.1.0.4:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:21:10.3792959Z Establishing network.
+2026-02-25T21:21:10.3794865Z Pulling image: appsvc/dotnetcore:10.0_20260115.4.tuxprod.
+2026-02-25T21:21:34.3739660Z Image appsvc/dotnetcore:10.0_20260115.4.tuxprod is pulled from registry 10.1.0.4:13209
+2026-02-25T21:21:34.3778513Z Container is starting.
+2026-02-25T21:21:34.4012270Z State: Starting, Action: MountingVolumes, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Mounting volumes for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:21:34.4014240Z Establishing user namespace if not established already.
+2026-02-25T21:21:34.4016846Z Establishing network if not established already.
+2026-02-25T21:21:34.4018862Z Mounting volumes.
+2026-02-25T21:21:34.4023232Z Nested mountpoint 
+2026-02-25T21:21:34.4090769Z Nested mountpoint volatile/logs
+2026-02-25T21:21:34.4214692Z Nested mountpoint 
+2026-02-25T21:21:34.4573576Z Nested mountpoint 
+2026-02-25T21:21:34.4585103Z Nested mountpoint 
+2026-02-25T21:21:34.5776070Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Finished pulling container image and mounting volumes for tradesmart-api. Allocatinng the rest of the container resources to finish container creation., DetailsLevel: INFO
+2026-02-25T21:21:34.5799114Z Creating container.
+2026-02-25T21:21:34.5804680Z Creating pipes for streaming container io.
+2026-02-25T21:21:34.5907340Z Creating stdout named pipe at /podr/container/pipe/3288c6252567_tradesmart-api/stdout_364d3bb1be744edf92edfe3496dc6fa4.
+2026-02-25T21:21:34.5928990Z Successfully created stdout named pipe at: /podr/container/pipe/3288c6252567_tradesmart-api/stdout_364d3bb1be744edf92edfe3496dc6fa4.
+2026-02-25T21:21:34.5930683Z Opening named pipe /podr/container/pipe/3288c6252567_tradesmart-api/stdout_364d3bb1be744edf92edfe3496dc6fa4 for reading in non-blocking mode.
+2026-02-25T21:21:34.5996408Z Successfully opened named pipe: /podr/container/pipe/3288c6252567_tradesmart-api/stdout_364d3bb1be744edf92edfe3496dc6fa4.
+2026-02-25T21:21:34.6003336Z Successfully removed non-blocking flag from /podr/container/pipe/3288c6252567_tradesmart-api/stdout_364d3bb1be744edf92edfe3496dc6fa4.
+2026-02-25T21:21:34.6011381Z Creating stderr named pipe at /podr/container/pipe/3288c6252567_tradesmart-api/stderr_4a383976749e4758bf5d58557ace62f2.
+2026-02-25T21:21:34.6018256Z Successfully created stderr named pipe at: /podr/container/pipe/3288c6252567_tradesmart-api/stderr_4a383976749e4758bf5d58557ace62f2.
+2026-02-25T21:21:34.6128956Z Opening named pipe /podr/container/pipe/3288c6252567_tradesmart-api/stderr_4a383976749e4758bf5d58557ace62f2 for reading in non-blocking mode.
+2026-02-25T21:21:34.6134800Z Successfully opened named pipe: /podr/container/pipe/3288c6252567_tradesmart-api/stderr_4a383976749e4758bf5d58557ace62f2.
+2026-02-25T21:21:34.6138060Z Successfully removed non-blocking flag from /podr/container/pipe/3288c6252567_tradesmart-api/stderr_4a383976749e4758bf5d58557ace62f2.
+2026-02-25T21:21:34.6145067Z Creating container with image: appsvc/dotnetcore:10.0_20260115.4.tuxprod from registry: 10.1.0.4:13209 and fully qualified image name: 10.1.0.4:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod
+2026-02-25T21:21:35.2923240Z Starting container: 3288c6252567_tradesmart-api.
+2026-02-25T21:21:35.3119043Z Starting watchers and probes.
+2026-02-25T21:21:35.3127450Z Starting metrics collection.
+2026-02-25T21:21:35.3130474Z Container is running.
+2026-02-25T21:21:35.3139760Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:21:35.3411611Z Container start method finished after 24963 ms.
+2026-02-25T21:21:35.3419901Z State: Starting, Action: InitiatingSiteWarmUpProbe, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:21:35.3484854Z State: Starting, Action: WaitingForSiteWarmUpProbeSuccess, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pinging warmup path to ensure container is ready to receive requests., DetailsLevel: INFO
+2026-02-25T21:21:52.5201285Z Site startup probe succeeded after 17.1231161 seconds.
+2026-02-25T21:21:52.6097041Z State: Starting, Action: WarmUpProbeSucceeded, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site startup probe succeeded after 17.1231161 seconds., DetailsLevel: INFO
+2026-02-25T21:21:52.6539625Z Site is running with deployment version: 87340994-b9f4-42c7-b46d-5499a390c260
+2026-02-25T21:21:52.6550015Z Site started.
+2026-02-25T21:21:52.6550937Z State: Started, Action: None, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:21:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:21:52.6811492Z Site is running with patch version DOTNETCORE 10.0.2
+2026-02-25T21:29:31.0531238Z State: Starting, Action: EstablishingSiteNetworks, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:29:32.0941741Z State: Starting, Action: StartingSiteContainers, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:29:32.0957098Z Container start method called.
+2026-02-25T21:29:32.0968143Z State: Starting, Action: PullingImage, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pulling image 10.1.0.5:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:29:32.0970558Z Establishing network.
+2026-02-25T21:29:32.0974595Z Pulling image: appsvc/dotnetcore:10.0_20260115.4.tuxprod.
+2026-02-25T21:29:32.5634659Z Image appsvc/dotnetcore:10.0_20260115.4.tuxprod is pulled from registry 10.1.0.5:13209
+2026-02-25T21:29:32.5636096Z Container is starting.
+2026-02-25T21:29:32.5636897Z State: Starting, Action: MountingVolumes, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Mounting volumes for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:29:32.5638159Z Establishing user namespace if not established already.
+2026-02-25T21:29:32.5639466Z Establishing network if not established already.
+2026-02-25T21:29:32.5640889Z Mounting volumes.
+2026-02-25T21:29:32.5642643Z Nested mountpoint 
+2026-02-25T21:29:32.5882328Z Nested mountpoint volatile/logs
+2026-02-25T21:29:32.5912336Z Nested mountpoint 
+2026-02-25T21:29:32.5944169Z Nested mountpoint 
+2026-02-25T21:29:32.6044374Z Nested mountpoint 
+2026-02-25T21:29:32.7249102Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Finished pulling container image and mounting volumes for tradesmart-api. Allocatinng the rest of the container resources to finish container creation., DetailsLevel: INFO
+2026-02-25T21:29:32.7250114Z Creating container.
+2026-02-25T21:29:32.7250773Z Creating pipes for streaming container io.
+2026-02-25T21:29:32.7251488Z Creating stdout named pipe at /podr/container/pipe/207dfa1e4e39_tradesmart-api/stdout_cf0919fd73974d60b541a24db4607e64.
+2026-02-25T21:29:32.7252965Z Successfully created stdout named pipe at: /podr/container/pipe/207dfa1e4e39_tradesmart-api/stdout_cf0919fd73974d60b541a24db4607e64.
+2026-02-25T21:29:32.7253640Z Opening named pipe /podr/container/pipe/207dfa1e4e39_tradesmart-api/stdout_cf0919fd73974d60b541a24db4607e64 for reading in non-blocking mode.
+2026-02-25T21:29:32.7254920Z Successfully opened named pipe: /podr/container/pipe/207dfa1e4e39_tradesmart-api/stdout_cf0919fd73974d60b541a24db4607e64.
+2026-02-25T21:29:32.7255570Z Successfully removed non-blocking flag from /podr/container/pipe/207dfa1e4e39_tradesmart-api/stdout_cf0919fd73974d60b541a24db4607e64.
+2026-02-25T21:29:32.7256597Z Creating stderr named pipe at /podr/container/pipe/207dfa1e4e39_tradesmart-api/stderr_27417bc4b8b6428c99cd4162563a8ce5.
+2026-02-25T21:29:32.7257729Z Successfully created stderr named pipe at: /podr/container/pipe/207dfa1e4e39_tradesmart-api/stderr_27417bc4b8b6428c99cd4162563a8ce5.
+2026-02-25T21:29:32.7258302Z Opening named pipe /podr/container/pipe/207dfa1e4e39_tradesmart-api/stderr_27417bc4b8b6428c99cd4162563a8ce5 for reading in non-blocking mode.
+2026-02-25T21:29:32.7259107Z Successfully opened named pipe: /podr/container/pipe/207dfa1e4e39_tradesmart-api/stderr_27417bc4b8b6428c99cd4162563a8ce5.
+2026-02-25T21:29:32.7259722Z Successfully removed non-blocking flag from /podr/container/pipe/207dfa1e4e39_tradesmart-api/stderr_27417bc4b8b6428c99cd4162563a8ce5.
+2026-02-25T21:29:32.7260596Z Creating container with image: appsvc/dotnetcore:10.0_20260115.4.tuxprod from registry: 10.1.0.5:13209 and fully qualified image name: 10.1.0.5:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod
+2026-02-25T21:29:33.7603334Z Starting container: 207dfa1e4e39_tradesmart-api.
+2026-02-25T21:29:33.8130342Z Starting watchers and probes.
+2026-02-25T21:29:33.8159073Z Starting metrics collection.
+2026-02-25T21:29:33.8205263Z Container is running.
+2026-02-25T21:29:33.8235428Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:29:33.8684695Z Container start method finished after 1771 ms.
+2026-02-25T21:29:33.8686812Z State: Starting, Action: InitiatingSiteWarmUpProbe, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:29:33.8687260Z State: Starting, Action: WaitingForSiteWarmUpProbeSuccess, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pinging warmup path to ensure container is ready to receive requests., DetailsLevel: INFO
+2026-02-25T21:29:51.9527839Z Site startup probe succeeded after 18.0820234 seconds.
+2026-02-25T21:29:52.0448910Z State: Starting, Action: WarmUpProbeSucceeded, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site startup probe succeeded after 18.0820234 seconds., DetailsLevel: INFO
+2026-02-25T21:29:52.1804032Z Site is running with deployment version: 87340994-b9f4-42c7-b46d-5499a390c260
+2026-02-25T21:29:52.1806791Z Site started.
+2026-02-25T21:29:52.1809156Z State: Started, Action: None, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:29:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:29:52.1812464Z Site is running with patch version DOTNETCORE 10.0.2
+2026-02-25T21:30:12.2363883Z State: Stopping, Action: StoppingSite, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:21:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:30:12.2399685Z State: Stopping, Action: StoppingSiteContainers, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:21:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:30:12.2403207Z Container is terminating. Grace period: 5 seconds.
+2026-02-25T21:30:12.2486615Z Stop and delete container. Retry count = 0
+2026-02-25T21:30:12.2488675Z Stopping container: 3288c6252567_tradesmart-api.
+2026-02-25T21:30:17.3120867Z Deleting container: 3288c6252567_tradesmart-api. Retry count = 0
+2026-02-25T21:30:17.4903403Z Container spec TerminationMessagePolicy  path 
+2026-02-25T21:30:17.4923359Z Container is terminated. Total time elapsed: 5251 ms.
+2026-02-25T21:30:17.5042234Z Site: tradesmart-api stopped.
+2026-02-25T21:30:22.1377636Z State: Starting, Action: EstablishingSiteNetworks, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:30:23.2293034Z State: Starting, Action: StartingSiteContainers, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: , DetailsLevel: INFO
+2026-02-25T21:30:23.2294417Z Container start method called.
+2026-02-25T21:30:23.2294823Z State: Starting, Action: PullingImage, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pulling image 10.1.0.4:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:30:23.2295944Z Establishing network.
+2026-02-25T21:30:23.2297108Z Pulling image: appsvc/dotnetcore:10.0_20260115.4.tuxprod.
+2026-02-25T21:30:24.6310306Z Container is starting.
+2026-02-25T21:30:24.6312377Z State: Starting, Action: MountingVolumes, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Mounting volumes for tradesmart-api., DetailsLevel: INFO
+2026-02-25T21:30:24.6314233Z Establishing user namespace if not established already.
+2026-02-25T21:30:24.6316307Z Establishing network if not established already.
+2026-02-25T21:30:24.6320809Z Mounting volumes.
+2026-02-25T21:30:24.6327155Z Nested mountpoint 
+2026-02-25T21:30:24.6366656Z Nested mountpoint volatile/logs
+2026-02-25T21:30:24.6397902Z Nested mountpoint 
+2026-02-25T21:30:24.6467769Z Nested mountpoint 
+2026-02-25T21:30:24.6517865Z Nested mountpoint 
+2026-02-25T21:30:24.9855470Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Finished pulling container image and mounting volumes for tradesmart-api. Allocatinng the rest of the container resources to finish container creation., DetailsLevel: INFO
+2026-02-25T21:30:24.9857077Z Creating container.
+2026-02-25T21:30:24.9858894Z Creating pipes for streaming container io.
+2026-02-25T21:30:24.9860547Z Creating stdout named pipe at /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stdout_f19d5bab9fbf40398c8c505b41d4d8ef.
+2026-02-25T21:30:24.9862902Z Successfully created stdout named pipe at: /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stdout_f19d5bab9fbf40398c8c505b41d4d8ef.
+2026-02-25T21:30:24.9864531Z Opening named pipe /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stdout_f19d5bab9fbf40398c8c505b41d4d8ef for reading in non-blocking mode.
+2026-02-25T21:30:24.9866220Z Successfully opened named pipe: /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stdout_f19d5bab9fbf40398c8c505b41d4d8ef.
+2026-02-25T21:30:24.9867731Z Successfully removed non-blocking flag from /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stdout_f19d5bab9fbf40398c8c505b41d4d8ef.
+2026-02-25T21:30:24.9923861Z Creating stderr named pipe at /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stderr_14aaaaedaf70451ba2c9bc15c1a731f3.
+2026-02-25T21:30:24.9925804Z Successfully created stderr named pipe at: /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stderr_14aaaaedaf70451ba2c9bc15c1a731f3.
+2026-02-25T21:30:24.9926970Z Opening named pipe /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stderr_14aaaaedaf70451ba2c9bc15c1a731f3 for reading in non-blocking mode.
+2026-02-25T21:30:24.9928381Z Successfully opened named pipe: /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stderr_14aaaaedaf70451ba2c9bc15c1a731f3.
+2026-02-25T21:30:24.9929477Z Successfully removed non-blocking flag from /podr/container/pipe/fd49bbc6b90b_tradesmart-api/stderr_14aaaaedaf70451ba2c9bc15c1a731f3.
+2026-02-25T21:30:24.9931045Z Creating container with image: appsvc/dotnetcore:10.0_20260115.4.tuxprod from registry: 10.1.0.4:13209 and fully qualified image name: 10.1.0.4:13209/appsvc/dotnetcore:10.0_20260115.4.tuxprod
+2026-02-25T21:30:25.3196802Z Starting container: fd49bbc6b90b_tradesmart-api.
+2026-02-25T21:30:25.3436612Z Starting watchers and probes.
+2026-02-25T21:30:25.3477425Z Starting metrics collection.
+2026-02-25T21:30:25.3479228Z Container is running.
+2026-02-25T21:30:25.3514449Z State: Starting, Action: CreatingContainer, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:30:25.3864611Z Container start method finished after 2156 ms.
+2026-02-25T21:30:25.3866944Z State: Starting, Action: InitiatingSiteWarmUpProbe, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Container tradesmart-api successfully created and is running., DetailsLevel: INFO
+2026-02-25T21:30:25.3867208Z State: Starting, Action: WaitingForSiteWarmUpProbeSuccess, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Pinging warmup path to ensure container is ready to receive requests., DetailsLevel: INFO
+2026-02-25T21:30:36.4814456Z Site startup probe succeeded after 11.0834009 seconds.
+2026-02-25T21:30:36.5459415Z State: Starting, Action: WarmUpProbeSucceeded, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site startup probe succeeded after 11.0834009 seconds., DetailsLevel: INFO
+2026-02-25T21:30:37.0157671Z Site is running with deployment version: ff858b58-8708-4c89-a7f9-ccb33c82005a
+2026-02-25T21:30:37.0160645Z Site started.
+2026-02-25T21:30:37.0161425Z State: Started, Action: None, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:30:37 (UTC), DetailsLevel: INFO
+2026-02-25T21:30:37.0172125Z Site is running with patch version DOTNETCORE 10.0.2
+2026-02-25T21:30:57.0226361Z State: Stopping, Action: StoppingSite, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:29:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:30:57.0230539Z State: Stopping, Action: StoppingSiteContainers, LastError: , LastErrorTimestamp: 01/01/0001 00:00:00, LastErrorDetails: , Details: Site started at 02/25/2026 21:29:52 (UTC), DetailsLevel: INFO
+2026-02-25T21:30:57.0232538Z Container is terminating. Grace period: 5 seconds.
+2026-02-25T21:30:57.0291669Z Stop and delete container. Retry count = 0
+2026-02-25T21:30:57.0294781Z Stopping container: 207dfa1e4e39_tradesmart-api.
+2026-02-25T21:31:02.0917774Z Deleting container: 207dfa1e4e39_tradesmart-api. Retry count = 0
+2026-02-25T21:31:02.1738994Z Container spec TerminationMessagePolicy  path 
+2026-02-25T21:31:02.1740776Z Container is terminated. Total time elapsed: 5150 ms.
+2026-02-25T21:31:02.1742009Z Site: tradesmart-api stopped.

@@ -39,8 +39,19 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 
 		_logger.LogInformation("Starting trade analysis for {Symbol} from {Exchange}", alert.Symbol, alert.Exchange);
 
+		// Normalize exchange-specific symbol format for Twelve Data
+		var normalizedSymbol = SymbolNormalizer.Normalize(alert.Symbol);
+
+		if (normalizedSymbol != alert.Symbol)
+		{
+			_logger.LogInformation(
+				"Normalized symbol from {OriginalSymbol} to {NormalizedSymbol}",
+				alert.Symbol,
+				normalizedSymbol);
+		}
+
 		// Fetch market data across multiple timeframes in parallel
-		var marketData = await FetchMarketDataAsync(alert.Symbol, cancellationToken).ConfigureAwait(false);
+		var marketData = await FetchMarketDataAsync(normalizedSymbol, cancellationToken).ConfigureAwait(false);
 
 		if (marketData.Count == 0)
 		{
