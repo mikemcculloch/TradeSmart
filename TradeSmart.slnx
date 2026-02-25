@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/API/">
+    <Project Path="API/TradeSmart.Api/TradeSmart.Api.csproj" />
+    <Project Path="API/TradeSmart.Domain/TradeSmart.Domain.csproj" />
+    <Project Path="API/TradeSmart.Infrastructure/TradeSmart.Infrastructure.csproj" />
+  </Folder>
+</Solution>
