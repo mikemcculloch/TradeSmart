@@ -1,5 +1,6 @@
 /.claude
-/.github
+/.github/*
+!/.github/workflows/
 /ai-catalog
 .mcp.json
 mcp-readme.md
