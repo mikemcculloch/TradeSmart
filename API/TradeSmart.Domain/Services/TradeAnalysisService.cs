@@ -11,17 +11,20 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 	private readonly IClaudeProxy _claudeProxy;
 	private readonly IDiscordProxy _discordProxy;
 	private readonly ILogger<TradeAnalysisService> _logger;
+	private readonly ITradeExecutionService _tradeExecutionService;
 	private readonly ITwelveDataProxy _twelveDataProxy;
 
 	public TradeAnalysisService(
 		ITwelveDataProxy twelveDataProxy,
 		IClaudeProxy claudeProxy,
 		IDiscordProxy discordProxy,
+		ITradeExecutionService tradeExecutionService,
 		ILogger<TradeAnalysisService> logger)
 	{
 		_twelveDataProxy = twelveDataProxy;
 		_claudeProxy = claudeProxy;
 		_discordProxy = discordProxy;
+		_tradeExecutionService = tradeExecutionService;
 		_logger = logger;
 	}
 
@@ -89,6 +92,9 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 		// Send Discord notification (fire-and-forget — don't fail the response)
 		_ = SendDiscordNotificationAsync(alert, analysisResponse.Result, cancellationToken);
 
+		// Evaluate for paper trade execution (fire-and-forget — don't fail the response)
+		_ = ExecutePaperTradeAsync(analysisResponse.Result, cancellationToken);
+
 		return analysisResponse;
 	}
 
@@ -130,6 +136,47 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 			Timeframe = timeframe,
 			Candles = response.Result ?? []
 		};
+	}
+
+	private async Task ExecutePaperTradeAsync(
+		TradeAnalysis analysis,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			var result = await _tradeExecutionService.ExecuteAsync(analysis, cancellationToken)
+				.ConfigureAwait(false);
+
+			if (result.HasErrors)
+			{
+				_logger.LogWarning(
+					"Trade execution evaluation failed for {Symbol}: {ErrorMessage}",
+					analysis.Symbol,
+					result.Error!.Message);
+				return;
+			}
+
+			if (result.Result!.TradeOpened)
+			{
+				_logger.LogInformation(
+					"Paper trade opened for {Symbol}: {Direction} at {EntryPrice}, Position ID: {PositionId}",
+					analysis.Symbol,
+					result.Result.Position!.Direction,
+					result.Result.Position.EntryPrice,
+					result.Result.Position.PositionId);
+			}
+			else
+			{
+				_logger.LogInformation(
+					"Paper trade not opened for {Symbol}: {RejectionReason}",
+					analysis.Symbol,
+					result.Result.RejectionReason);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Unhandled error during paper trade execution for {Symbol}", analysis.Symbol);
+		}
 	}
 
 	private async Task SendDiscordNotificationAsync(

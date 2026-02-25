@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TradeSmart.Api.HostedServices;
 
 namespace TradeSmart.Api;
 
@@ -11,7 +12,6 @@ public static class ServiceCollectionExtensions
 	/// <param name="configuration">The application configuration.</param>
 	public static void RegisterApiServices(this IServiceCollection services, IConfiguration configuration)
 	{
-		// No API-layer-specific services at this time.
-		// Hydrators, field registries, etc. would be registered here.
+		services.AddHostedService<TradeMonitorService>();
 	}
 }

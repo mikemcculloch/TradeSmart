@@ -14,5 +14,7 @@ public static class ServiceCollectionExtensions
 	public static void RegisterDomainServices(this IServiceCollection services, IConfiguration configuration)
 	{
 		services.AddScoped<ITradeAnalysisService, TradeAnalysisService>();
+		services.AddSingleton<IPaperTradingService, PaperTradingService>();
+		services.AddScoped<ITradeExecutionService, TradeExecutionService>();
 	}
 }

@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
 		services.AddScoped<ITwelveDataProxy, TwelveDataProxy>();
 		services.AddScoped<IClaudeProxy, ClaudeProxy>();
 		services.AddScoped<IDiscordProxy, DiscordProxy>();
+		services.AddScoped<IPaperTradingStateProxy, PaperTradingStateProxy>();
 
 		// Twelve Data HTTP client with retry policy
 		services.AddHttpClient(Constants.TWELVE_DATA_HTTP_CLIENT_NAME)

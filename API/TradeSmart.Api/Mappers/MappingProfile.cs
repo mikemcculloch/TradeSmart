@@ -13,5 +13,11 @@ public sealed class MappingProfile : Profile
 
 		CreateMap<TradeAnalysis, TradeAnalysisResponseDto>()
 			.ForMember(dest => dest.Direction, opt => opt.MapFrom(src => src.Direction.ToString()));
+
+		// Paper trading mappings
+		CreateMap<PaperTradingState, PaperTradingStateDto>();
+		CreateMap<PaperWallet, PaperWalletDto>();
+		CreateMap<PaperPosition, PaperPositionDto>()
+			.ForMember(dest => dest.Direction, opt => opt.MapFrom(src => src.Direction.ToString()));
 	}
 }
