@@ -9,16 +9,19 @@ namespace TradeSmart.Domain.Services;
 public sealed class TradeAnalysisService : ITradeAnalysisService
 {
 	private readonly IClaudeProxy _claudeProxy;
+	private readonly IDiscordProxy _discordProxy;
 	private readonly ILogger<TradeAnalysisService> _logger;
 	private readonly ITwelveDataProxy _twelveDataProxy;
 
 	public TradeAnalysisService(
 		ITwelveDataProxy twelveDataProxy,
 		IClaudeProxy claudeProxy,
+		IDiscordProxy discordProxy,
 		ILogger<TradeAnalysisService> logger)
 	{
 		_twelveDataProxy = twelveDataProxy;
 		_claudeProxy = claudeProxy;
+		_discordProxy = discordProxy;
 		_logger = logger;
 	}
 
@@ -72,6 +75,9 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 			analysisResponse.Result!.Direction,
 			analysisResponse.Result.Confidence);
 
+		// Send Discord notification (fire-and-forget — don't fail the response)
+		_ = SendDiscordNotificationAsync(alert, analysisResponse.Result, cancellationToken);
+
 		return analysisResponse;
 	}
 
@@ -113,5 +119,29 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 			Timeframe = timeframe,
 			Candles = response.Result ?? []
 		};
+	}
+
+	private async Task SendDiscordNotificationAsync(
+		TradingViewAlert alert,
+		TradeAnalysis analysis,
+		CancellationToken cancellationToken)
+	{
+		try
+		{
+			var result = await _discordProxy.SendTradeNotificationAsync(alert, analysis, cancellationToken)
+				.ConfigureAwait(false);
+
+			if (result.HasErrors)
+			{
+				_logger.LogWarning(
+					"Discord notification failed for {Symbol}: {ErrorMessage}",
+					analysis.Symbol,
+					result.Error!.Message);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Unhandled error sending Discord notification for {Symbol}", analysis.Symbol);
+		}
 	}
 }

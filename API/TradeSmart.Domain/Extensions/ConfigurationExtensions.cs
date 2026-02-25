@@ -43,6 +43,12 @@ public static class ConfigurationExtensions
 		return configuration.GetValue("TwelveData:BaseUrl", defaultValue ?? "https://api.twelvedata.com");
 	}
 
+	/// <summary>Gets the Discord webhook URL for trade notifications.</summary>
+	public static string? GetDiscordWebhookUrl(this IConfiguration configuration, string? defaultValue = default)
+	{
+		return configuration.GetValue("Discord:WebhookUrl", defaultValue);
+	}
+
 	/// <summary>Gets the webhook shared secret for TradingView authentication.</summary>
 	public static string? GetWebhookSecret(this IConfiguration configuration, string? defaultValue = default)
 	{

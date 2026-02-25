@@ -4,6 +4,7 @@ namespace TradeSmart.Domain;
 public static class Constants
 {
 	public const string CLAUDE_HTTP_CLIENT_NAME = "ClaudeHttpClient";
+	public const string DISCORD_HTTP_CLIENT_NAME = "DiscordHttpClient";
 	public const string TWELVE_DATA_HTTP_CLIENT_NAME = "TwelveDataHttpClient";
 
 	public static class ErrorCodes
@@ -13,6 +14,7 @@ public static class Constants
 		public const int CLAUDE_API_ERROR = 1002;
 		public const int TWELVE_DATA_API_ERROR = 1003;
 		public const int WEBHOOK_AUTH_FAILED = 1004;
+		public const int DISCORD_NOTIFICATION_ERROR = 1005;
 	}
 
 	public static class Timeframes

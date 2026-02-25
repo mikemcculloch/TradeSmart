@@ -22,9 +22,14 @@ public static class ServiceCollectionExtensions
 		// Proxies
 		services.AddScoped<ITwelveDataProxy, TwelveDataProxy>();
 		services.AddScoped<IClaudeProxy, ClaudeProxy>();
+		services.AddScoped<IDiscordProxy, DiscordProxy>();
 
 		// Twelve Data HTTP client with retry policy
 		services.AddHttpClient(Constants.TWELVE_DATA_HTTP_CLIENT_NAME)
+			.AddPolicyHandler(GetRetryPolicy());
+
+		// Discord HTTP client
+		services.AddHttpClient(Constants.DISCORD_HTTP_CLIENT_NAME)
 			.AddPolicyHandler(GetRetryPolicy());
 
 		// Claude HTTP client with API key header and retry policy
