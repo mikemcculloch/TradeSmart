@@ -56,19 +56,6 @@ public sealed class TradeExecutionService : ITradeExecutionService
 		// Normalize symbol for internal use
 		var normalizedSymbol = SymbolNormalizer.Normalize(alert.Symbol);
 
-		// Check symbol is in allowed list
-		var baseSymbol = ExtractBaseSymbol(normalizedSymbol);
-		if (!Constants.PaperTrading.ALLOWED_SYMBOLS.Contains(baseSymbol, StringComparer.OrdinalIgnoreCase))
-		{
-			_logger.LogInformation("Trade rejected for {Symbol}: not in allowed trading list", alert.Symbol);
-			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
-			{
-				TradeOpened = false,
-				RejectionReason = $"Symbol {alert.Symbol} (base: {baseSymbol}) is not in the allowed trading list",
-				Analysis = BuildAnalysisFromSignal(alert, direction)
-			});
-		}
-
 		// Build a TradeAnalysis from the strategy signal (100% confidence — strategy already decided)
 		var analysis = BuildAnalysisFromSignal(alert, direction) with
 		{
@@ -139,19 +126,6 @@ public sealed class TradeExecutionService : ITradeExecutionService
 		CancellationToken cancellationToken = default)
 	{
 		var tradingMode = _configuration.GetTradingMode();
-
-		// Check symbol is in allowed list
-		var baseSymbol = ExtractBaseSymbol(analysis.Symbol);
-		if (!Constants.PaperTrading.ALLOWED_SYMBOLS.Contains(baseSymbol, StringComparer.OrdinalIgnoreCase))
-		{
-			_logger.LogInformation("Trade rejected for {Symbol}: not in allowed trading list", analysis.Symbol);
-			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
-			{
-				TradeOpened = false,
-				RejectionReason = $"Symbol {analysis.Symbol} (base: {baseSymbol}) is not in the allowed trading list",
-				Analysis = analysis
-			});
-		}
 
 		if (analysis.Direction == TradeDirection.NoTrade)
 		{
@@ -449,11 +423,6 @@ public sealed class TradeExecutionService : ITradeExecutionService
 			TakeProfit = alert.TakeProfit,
 			Reasoning = $"Strategy signal: {alert.Message}"
 		};
-	}
-
-	private static string ExtractBaseSymbol(string symbol)
-	{
-		return symbol.Contains('/') ? symbol.Split('/')[0] : symbol;
 	}
 
 	private static string ToBitunixSymbol(string symbol)

@@ -42,8 +42,7 @@ public static class Constants
 		public const decimal DEFAULT_MAX_STOP_LOSS_PERCENT = 0.20m;
 		public const int DEFAULT_MONITOR_INTERVAL_SECONDS = 60;
 
-		/// <summary>Base symbols allowed for trading.</summary>
-		public static readonly string[] ALLOWED_SYMBOLS = ["BTC", "ETH", "XRP", "GOOGL", "HIMS", "PLTR", "XAU", "XAG", "XPT"];
+
 	}
 
 	public static class Timeframes
