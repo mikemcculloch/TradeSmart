@@ -12,4 +12,16 @@ public interface ITradeAnalysisService
 	Task<ProxyResponse<TradeAnalysis>> AnalyzeAsync(
 		TradingViewAlert alert,
 		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Fire-and-forget audit: fetches market data, runs Claude analysis,
+	/// and sends results to Discord. Does NOT execute trades.
+	/// </summary>
+	/// <param name="alert">The alert that was already executed.</param>
+	/// <param name="executionResult">The result of the trade execution.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	Task AuditAsync(
+		TradingViewAlert alert,
+		TradeExecutionResult executionResult,
+		CancellationToken cancellationToken = default);
 }

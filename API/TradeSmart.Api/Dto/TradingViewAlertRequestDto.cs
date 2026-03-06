@@ -12,7 +12,7 @@ public sealed record TradingViewAlertRequestDto
 	/// <summary>The exchange (e.g., "NASDAQ", "BINANCE").</summary>
 	public string Exchange { get; init; } = string.Empty;
 
-	/// <summary>The alert action from TradingView (e.g., "buy", "sell", "strong_buy").</summary>
+	/// <summary>The alert action from TradingView (e.g., "buy", "sell").</summary>
 	public string Action { get; init; } = string.Empty;
 
 	/// <summary>The price at the time the alert fired.</summary>
@@ -23,6 +23,18 @@ public sealed record TradingViewAlertRequestDto
 
 	/// <summary>The alert message/description from TradingView.</summary>
 	public string Message { get; init; } = string.Empty;
+
+	/// <summary>Signal type: "entry" for new positions, "close" for exits.</summary>
+	public string Type { get; init; } = "entry";
+
+	/// <summary>Trade direction: "long" or "short" (entry signals only).</summary>
+	public string? Direction { get; init; }
+
+	/// <summary>Stop-loss price from the strategy (entry signals only).</summary>
+	public decimal? StopLoss { get; init; }
+
+	/// <summary>Take-profit price from the strategy (entry signals only).</summary>
+	public decimal? TakeProfit { get; init; }
 
 	/// <summary>Shared secret for webhook authentication.</summary>
 	public string? Secret { get; init; }

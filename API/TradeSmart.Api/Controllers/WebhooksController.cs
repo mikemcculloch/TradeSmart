@@ -6,7 +6,10 @@ using TradeSmart.Domain.Interfaces.Services;
 
 namespace TradeSmart.Api.Controllers;
 
-/// <summary>Webhook endpoint for receiving TradingView alerts and returning trade analysis.</summary>
+/// <summary>
+/// Webhook endpoint for receiving TradingView strategy signals.
+/// Entry signals execute trades immediately; Claude audits in the background for Discord insight.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public sealed class WebhooksController : ControllerBase
@@ -15,36 +18,38 @@ public sealed class WebhooksController : ControllerBase
 	private readonly ILogger<WebhooksController> _logger;
 	private readonly IMapper _mapper;
 	private readonly ITradeAnalysisService _tradeAnalysisService;
+	private readonly ITradeExecutionService _tradeExecutionService;
 
 	public WebhooksController(
+		ITradeExecutionService tradeExecutionService,
 		ITradeAnalysisService tradeAnalysisService,
 		IMapper mapper,
 		ILogger<WebhooksController> logger,
 		IConfiguration configuration)
 	{
+		_tradeExecutionService = tradeExecutionService;
 		_tradeAnalysisService = tradeAnalysisService;
 		_mapper = mapper;
 		_logger = logger;
 		_configuration = configuration;
 	}
 
-	/// <summary>Receives a TradingView alert and returns an AI-powered trade analysis.</summary>
-	/// <param name="request">The TradingView alert payload.</param>
-	/// <param name="cancellationToken">Cancellation token.</param>
-	/// <returns>Trade analysis with direction, confidence, entry/exit levels, and reasoning.</returns>
+	/// <summary>
+	/// Receives a TradingView strategy signal and executes immediately.
+	/// Entry signals open positions; close signals close them.
+	/// Claude analysis runs in the background for Discord audit logging.
+	/// </summary>
 	[HttpPost("tradingview")]
-	[ProducesResponseType(typeof(TradeAnalysisResponseDto), StatusCodes.Status200OK)]
+	[ProducesResponseType(typeof(TradeExecutionResultDto), StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult<TradeAnalysisResponseDto>> ReceiveTradingViewAlertAsync(
+	public async Task<IActionResult> ReceiveTradingViewAlertAsync(
 		[FromBody] TradingViewAlertRequestDto request,
 		CancellationToken cancellationToken)
 	{
 		if (!ModelState.IsValid)
-		{
 			return ValidationProblem(ModelState);
-		}
 
 		// Validate webhook secret
 		var expectedSecret = _configuration.GetWebhookSecret();
@@ -54,30 +59,50 @@ public sealed class WebhooksController : ControllerBase
 			return Unauthorized(new { error = "Invalid webhook secret." });
 		}
 
-		_logger.LogInformation(
-			"Received TradingView alert for {Symbol} on {Exchange} — action: {Action}",
-			request.Symbol,
-			request.Exchange,
-			request.Action);
-
 		var alert = _mapper.Map<TradingViewAlert>(request);
 
-		var result = await _tradeAnalysisService.AnalyzeAsync(alert, cancellationToken);
+		_logger.LogInformation(
+			"Received TradingView signal: {Type} {Symbol} {Direction} @ {Price}",
+			alert.Type, alert.Symbol, alert.Direction ?? "n/a", alert.Price);
 
-		if (result.HasErrors)
+		// ── Close signals ───────────────────────────────────────────
+		if (alert.IsClose)
 		{
-			_logger.LogError(
-				"Trade analysis failed for {Symbol}: [{ErrorCode}] {ErrorMessage}",
-				request.Symbol,
-				result.Error!.Code,
-				result.Error.Message);
+			var closeResult = await _tradeExecutionService.CloseFromSignalAsync(alert, cancellationToken);
 
-			return StatusCode(
-				StatusCodes.Status500InternalServerError,
-				new { error = result.Error.Message });
+			if (closeResult.HasErrors)
+			{
+				_logger.LogError("Close failed for {Symbol}: {Error}", alert.Symbol, closeResult.Error!.Message);
+				return StatusCode(StatusCodes.Status500InternalServerError, new { error = closeResult.Error.Message });
+			}
+
+			return Ok(new { closed = closeResult.Result, symbol = alert.Symbol, message = alert.Message });
 		}
 
-		var response = _mapper.Map<TradeAnalysisResponseDto>(result.Result);
-		return Ok(response);
+		// ── Entry signals ───────────────────────────────────────────
+		var executionResult = await _tradeExecutionService.ExecuteFromSignalAsync(alert, cancellationToken);
+
+		if (executionResult.HasErrors)
+		{
+			_logger.LogError(
+				"Execution failed for {Symbol}: [{Code}] {Error}",
+				alert.Symbol, executionResult.Error!.Code, executionResult.Error.Message);
+			return StatusCode(StatusCodes.Status500InternalServerError, new { error = executionResult.Error.Message });
+		}
+
+		// Fire-and-forget: Claude audit for Discord insight (no trade gating)
+		_ = Task.Run(() => _tradeAnalysisService.AuditAsync(alert, executionResult.Result!, CancellationToken.None));
+
+		var result = executionResult.Result!;
+		return Ok(new TradeExecutionResultDto
+		{
+			TradeOpened = result.TradeOpened,
+			Symbol = result.Analysis.Symbol,
+			Direction = result.Analysis.Direction.ToString(),
+			EntryPrice = result.Position?.EntryPrice,
+			StopLoss = result.Analysis.StopLoss,
+			TakeProfit = result.Analysis.TakeProfit,
+			RejectionReason = result.RejectionReason
+		});
 	}
 }

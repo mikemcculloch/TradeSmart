@@ -6,4 +6,5 @@ public static class CloseReason
 	public const string StopLoss = "StopLoss";
 	public const string TakeProfit = "TakeProfit";
 	public const string Manual = "Manual";
+	public const string StrategyExit = "StrategyExit";
 }

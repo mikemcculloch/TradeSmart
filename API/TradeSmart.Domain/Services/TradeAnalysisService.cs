@@ -92,10 +92,64 @@ public sealed class TradeAnalysisService : ITradeAnalysisService
 		// Send Discord notification (fire-and-forget — don't fail the response)
 		_ = SendDiscordNotificationAsync(alert, analysisResponse.Result, cancellationToken);
 
-		// Evaluate for paper trade execution (fire-and-forget — don't fail the response)
+		// Legacy: evaluate for paper trade execution (fire-and-forget)
 		_ = ExecutePaperTradeAsync(analysisResponse.Result, cancellationToken);
 
 		return analysisResponse;
+	}
+
+	/// <inheritdoc />
+	public async Task AuditAsync(
+		TradingViewAlert alert,
+		TradeExecutionResult executionResult,
+		CancellationToken cancellationToken = default)
+	{
+		try
+		{
+			var normalizedSymbol = SymbolNormalizer.Normalize(alert.Symbol);
+
+			_logger.LogInformation(
+				"Starting audit for {Symbol}: trade {Outcome}",
+				normalizedSymbol,
+				executionResult.TradeOpened ? "OPENED" : "REJECTED");
+
+			// Fetch market data for Claude context
+			var marketData = await FetchMarketDataAsync(normalizedSymbol, cancellationToken)
+				.ConfigureAwait(false);
+
+			if (marketData.Count == 0)
+			{
+				_logger.LogWarning("Audit skipped — no market data for {Symbol}", normalizedSymbol);
+				return;
+			}
+
+			// Run Claude analysis (retrospective — trade already executed)
+			var analysisResponse = await _claudeProxy.AnalyzeTradeAsync(alert, marketData, cancellationToken)
+				.ConfigureAwait(false);
+
+			if (analysisResponse.HasErrors)
+			{
+				_logger.LogWarning(
+					"Audit Claude analysis failed for {Symbol}: {Error}",
+					normalizedSymbol,
+					analysisResponse.Error!.Message);
+				return;
+			}
+
+			// Send Discord notification so we can see Claude's opinion alongside the execution result
+			_ = SendDiscordNotificationAsync(alert, analysisResponse.Result!, cancellationToken);
+
+			_logger.LogInformation(
+				"Audit complete for {Symbol}: Claude says {Direction} @ {Confidence}% confidence (trade was {Outcome})",
+				normalizedSymbol,
+				analysisResponse.Result!.Direction,
+				analysisResponse.Result.Confidence,
+				executionResult.TradeOpened ? "EXECUTED" : "SKIPPED");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Unhandled error during audit for {Symbol}", alert.Symbol);
+		}
 	}
 
 	private async Task<List<TimeframeData>> FetchMarketDataAsync(
