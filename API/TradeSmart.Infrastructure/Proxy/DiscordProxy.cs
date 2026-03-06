@@ -8,7 +8,7 @@ using TradeSmart.Domain.Interfaces.Proxies;
 
 namespace TradeSmart.Infrastructure.Proxy;
 
-/// <summary>Sends trade analysis notifications to Discord via webhook.</summary>
+/// <summary>Sends trade notifications to Discord via webhook.</summary>
 public sealed class DiscordProxy : IDiscordProxy
 {
 	private readonly IConfiguration _configuration;
@@ -25,165 +25,178 @@ public sealed class DiscordProxy : IDiscordProxy
 		_logger = logger;
 	}
 
+	// ── Shared HTTP helper ──────────────────────────────────────────────
+
+	private async Task<ProxyResponse<bool>> PostPayloadAsync(
+		object payload, string symbol, string notificationType, CancellationToken cancellationToken)
+	{
+		var webhookUrl = _configuration.GetDiscordWebhookUrl();
+		if (string.IsNullOrWhiteSpace(webhookUrl))
+		{
+			_logger.LogDebug("Discord webhook URL not configured — skipping {Type} for {Symbol}", notificationType, symbol);
+			return ProxyResponse<bool>.Success(false);
+		}
+
+		try
+		{
+			var json = JsonConvert.SerializeObject(payload);
+			var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+			var client = _httpClientFactory.CreateClient(Constants.DISCORD_HTTP_CLIENT_NAME);
+			var response = await client.PostAsync(webhookUrl, content, cancellationToken).ConfigureAwait(false);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+				_logger.LogWarning("Discord {Type} returned {StatusCode}: {Body}", notificationType, (int)response.StatusCode, body);
+				return ProxyResponse<bool>.CreateError(
+					Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
+					$"Discord webhook returned {(int)response.StatusCode}.");
+			}
+
+			_logger.LogInformation("Discord {Type} notification sent for {Symbol}", notificationType, symbol);
+			return ProxyResponse<bool>.Success(true);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Failed to send Discord {Type} notification for {Symbol}", notificationType, symbol);
+			return ProxyResponse<bool>.CreateError(
+				Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
+				$"Discord notification failed: {ex.Message}");
+		}
+	}
+
+	// ════════════════════════════════════════════════════════════════════
+	//  Signal Received — fires on EVERY incoming webhook
+	// ════════════════════════════════════════════════════════════════════
+
 	/// <inheritdoc />
-	public async Task<ProxyResponse<bool>> SendTradeNotificationAsync(
+	public Task<ProxyResponse<bool>> SendSignalReceivedNotificationAsync(
+		TradingViewAlert alert,
+		string decision,
+		string? details = null,
+		CancellationToken cancellationToken = default)
+	{
+		var payload = BuildSignalReceivedPayload(alert, decision, details);
+		return PostPayloadAsync(payload, alert.Symbol, "signal-received", cancellationToken);
+	}
+
+	// ════════════════════════════════════════════════════════════════════
+	//  Trade Analysis (Claude audit)
+	// ════════════════════════════════════════════════════════════════════
+
+	/// <inheritdoc />
+	public Task<ProxyResponse<bool>> SendTradeNotificationAsync(
 		TradingViewAlert alert,
 		TradeAnalysis analysis,
 		CancellationToken cancellationToken = default)
 	{
-		var webhookUrl = _configuration.GetDiscordWebhookUrl();
-
-		if (string.IsNullOrWhiteSpace(webhookUrl))
-		{
-			_logger.LogWarning("Discord webhook URL is not configured — skipping notification");
-			return ProxyResponse<bool>.Success(false);
-		}
-
-		try
-		{
-			var payload = BuildPayload(alert, analysis);
-			var json = JsonConvert.SerializeObject(payload);
-			var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-			var client = _httpClientFactory.CreateClient(Constants.DISCORD_HTTP_CLIENT_NAME);
-			var response = await client.PostAsync(webhookUrl, content, cancellationToken)
-				.ConfigureAwait(false);
-
-			if (!response.IsSuccessStatusCode)
-			{
-				var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-				_logger.LogWarning(
-					"Discord webhook returned {StatusCode}: {Body}",
-					(int)response.StatusCode,
-					body);
-
-				return ProxyResponse<bool>.CreateError(
-					Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-					$"Discord webhook returned {(int)response.StatusCode}.");
-			}
-
-			_logger.LogInformation("Discord notification sent for {Symbol}", analysis.Symbol);
-			return ProxyResponse<bool>.Success(true);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Failed to send Discord notification for {Symbol}", analysis.Symbol);
-			return ProxyResponse<bool>.CreateError(
-				Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-				$"Discord notification failed: {ex.Message}");
-		}
+		var payload = BuildAnalysisPayload(alert, analysis);
+		return PostPayloadAsync(payload, analysis.Symbol, "analysis", cancellationToken);
 	}
 
+	// ════════════════════════════════════════════════════════════════════
+	//  Trade Opened
+	// ════════════════════════════════════════════════════════════════════
+
 	/// <inheritdoc />
-	public async Task<ProxyResponse<bool>> SendTradeOpenedNotificationAsync(
+	public Task<ProxyResponse<bool>> SendTradeOpenedNotificationAsync(
 		PaperPosition position,
 		PaperWallet wallet,
 		CancellationToken cancellationToken = default)
 	{
-		var webhookUrl = _configuration.GetDiscordWebhookUrl();
-
-		if (string.IsNullOrWhiteSpace(webhookUrl))
-		{
-			return ProxyResponse<bool>.Success(false);
-		}
-
-		try
-		{
-			var payload = BuildTradeOpenedPayload(position, wallet);
-			var json = JsonConvert.SerializeObject(payload);
-			var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-			var client = _httpClientFactory.CreateClient(Constants.DISCORD_HTTP_CLIENT_NAME);
-			var response = await client.PostAsync(webhookUrl, content, cancellationToken)
-				.ConfigureAwait(false);
-
-			if (!response.IsSuccessStatusCode)
-			{
-				var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-				_logger.LogWarning(
-					"Discord webhook returned {StatusCode} for trade opened: {Body}",
-					(int)response.StatusCode,
-					body);
-
-				return ProxyResponse<bool>.CreateError(
-					Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-					$"Discord webhook returned {(int)response.StatusCode}.");
-			}
-
-			_logger.LogInformation("Discord trade-opened notification sent for {Symbol}", position.Symbol);
-			return ProxyResponse<bool>.Success(true);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Failed to send trade-opened Discord notification for {Symbol}", position.Symbol);
-			return ProxyResponse<bool>.CreateError(
-				Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-				$"Discord notification failed: {ex.Message}");
-		}
+		var payload = BuildTradeOpenedPayload(position, wallet);
+		return PostPayloadAsync(payload, position.Symbol, "trade-opened", cancellationToken);
 	}
 
+	// ════════════════════════════════════════════════════════════════════
+	//  Trade Closed
+	// ════════════════════════════════════════════════════════════════════
+
 	/// <inheritdoc />
-	public async Task<ProxyResponse<bool>> SendTradeClosedNotificationAsync(
+	public Task<ProxyResponse<bool>> SendTradeClosedNotificationAsync(
 		PaperPosition closedPosition,
 		PaperWallet wallet,
 		CancellationToken cancellationToken = default)
 	{
-		var webhookUrl = _configuration.GetDiscordWebhookUrl();
-
-		if (string.IsNullOrWhiteSpace(webhookUrl))
-		{
-			return ProxyResponse<bool>.Success(false);
-		}
-
-		try
-		{
-			var payload = BuildTradeClosedPayload(closedPosition, wallet);
-			var json = JsonConvert.SerializeObject(payload);
-			var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-			var client = _httpClientFactory.CreateClient(Constants.DISCORD_HTTP_CLIENT_NAME);
-			var response = await client.PostAsync(webhookUrl, content, cancellationToken)
-				.ConfigureAwait(false);
-
-			if (!response.IsSuccessStatusCode)
-			{
-				var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-				_logger.LogWarning(
-					"Discord webhook returned {StatusCode} for trade closed: {Body}",
-					(int)response.StatusCode,
-					body);
-
-				return ProxyResponse<bool>.CreateError(
-					Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-					$"Discord webhook returned {(int)response.StatusCode}.");
-			}
-
-			_logger.LogInformation("Discord trade-closed notification sent for {Symbol}", closedPosition.Symbol);
-			return ProxyResponse<bool>.Success(true);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Failed to send trade-closed Discord notification for {Symbol}", closedPosition.Symbol);
-			return ProxyResponse<bool>.CreateError(
-				Constants.ErrorCodes.DISCORD_NOTIFICATION_ERROR,
-				$"Discord notification failed: {ex.Message}");
-		}
+		var payload = BuildTradeClosedPayload(closedPosition, wallet);
+		return PostPayloadAsync(payload, closedPosition.Symbol, "trade-closed", cancellationToken);
 	}
 
-	private static object BuildPayload(TradingViewAlert alert, TradeAnalysis analysis)
+	// ── Payload Builders ────────────────────────────────────────────────
+
+	private static object BuildSignalReceivedPayload(TradingViewAlert alert, string decision, string? details)
+	{
+		// Color: blue for entry, orange for close, grey for unknown
+		var isEntry = alert.IsEntry;
+		var isClose = alert.IsClose;
+		var color = isEntry ? 3447003 : isClose ? 15105570 : 9807270; // blue / orange / grey
+
+		var typeEmoji = isEntry ? "\U0001F4E8" : isClose ? "\U0001F4E4" : "\u2753"; // 📨 / 📤 / ❓
+		var decisionEmoji = decision.Contains("OPENED", StringComparison.OrdinalIgnoreCase)
+			? "\u2705" // ✅
+			: decision.Contains("CLOSED", StringComparison.OrdinalIgnoreCase)
+				? "\u2705"
+				: decision.Contains("REJECTED", StringComparison.OrdinalIgnoreCase) || decision.Contains("ERROR", StringComparison.OrdinalIgnoreCase)
+					? "\u274C" // ❌
+					: "\u2139\uFE0F"; // ℹ️
+
+		var fields = new List<object>
+		{
+			new { name = "Type", value = $"{typeEmoji} **{alert.Type.ToUpperInvariant()}**", inline = true },
+			new { name = "Symbol", value = $"**{alert.Symbol}**", inline = true },
+			new { name = "Price", value = $"${alert.Price:N2}", inline = true }
+		};
+
+		if (!string.IsNullOrWhiteSpace(alert.Direction))
+			fields.Add(new { name = "Direction", value = $"**{alert.Direction}**", inline = true });
+
+		if (alert.StopLoss.HasValue)
+			fields.Add(new { name = "Stop Loss", value = $"${alert.StopLoss:N2}", inline = true });
+
+		if (alert.TakeProfit.HasValue)
+			fields.Add(new { name = "Take Profit", value = $"${alert.TakeProfit:N2}", inline = true });
+
+		if (!string.IsNullOrWhiteSpace(alert.Interval))
+			fields.Add(new { name = "Interval", value = alert.Interval, inline = true });
+
+		if (!string.IsNullOrWhiteSpace(alert.Exchange))
+			fields.Add(new { name = "Exchange", value = alert.Exchange, inline = true });
+
+		fields.Add(new { name = $"{decisionEmoji} Decision", value = $"**{decision}**", inline = false });
+
+		if (!string.IsNullOrWhiteSpace(details))
+		{
+			var truncated = details.Length > 1000 ? details[..997] + "..." : details;
+			fields.Add(new { name = "Details", value = truncated, inline = false });
+		}
+
+		var embed = new
+		{
+			title = $"{typeEmoji} SIGNAL RECEIVED \u2014 {alert.Symbol}",
+			color,
+			fields,
+			footer = new { text = $"TradeSmart | {alert.ReceivedAt:yyyy-MM-dd HH:mm:ss} UTC" },
+			timestamp = alert.ReceivedAt.ToString("o")
+		};
+
+		return new { username = "TradeSmart", embeds = new[] { embed } };
+	}
+
+	private static object BuildAnalysisPayload(TradingViewAlert alert, TradeAnalysis analysis)
 	{
 		var directionEmoji = analysis.Direction switch
 		{
-			TradeDirection.Long => "\U0001F7E2",  // 🟢
-			TradeDirection.Short => "\U0001F534", // 🔴
-			_ => "\U000026AA"                     // ⚪
+			TradeDirection.Long => "\U0001F7E2",
+			TradeDirection.Short => "\U0001F534",
+			_ => "\U000026AA"
 		};
 
 		var color = analysis.Direction switch
 		{
-			TradeDirection.Long => 3066993,   // green
-			TradeDirection.Short => 15158332, // red
-			_ => 9807270                      // grey
+			TradeDirection.Long => 3066993,
+			TradeDirection.Short => 15158332,
+			_ => 9807270
 		};
 
 		var fields = new List<object>
@@ -194,49 +207,30 @@ public sealed class DiscordProxy : IDiscordProxy
 		};
 
 		if (analysis.EntryPrice.HasValue)
-		{
 			fields.Add(new { name = "Entry", value = $"${analysis.EntryPrice:N2}", inline = true });
-		}
-
 		if (analysis.StopLoss.HasValue)
-		{
 			fields.Add(new { name = "Stop Loss", value = $"${analysis.StopLoss:N2}", inline = true });
-		}
-
 		if (analysis.TakeProfit.HasValue)
-		{
 			fields.Add(new { name = "Take Profit", value = $"${analysis.TakeProfit:N2}", inline = true });
-		}
 
-		// Truncate reasoning to fit Discord embed field limit (1024 chars)
-		var reasoning = analysis.Reasoning.Length > 1000
-			? analysis.Reasoning[..997] + "..."
-			: analysis.Reasoning;
-
+		var reasoning = analysis.Reasoning.Length > 1000 ? analysis.Reasoning[..997] + "..." : analysis.Reasoning;
 		fields.Add(new { name = "Analysis", value = reasoning, inline = false });
 
 		var embed = new
 		{
-			title = $"{directionEmoji} {analysis.Symbol} — Trade Signal",
+			title = $"\U0001F916 CLAUDE AUDIT \u2014 {analysis.Symbol}",
 			color,
 			fields,
-			footer = new { text = $"TradeSmart | {analysis.AnalyzedAt:yyyy-MM-dd HH:mm:ss} UTC" },
+			footer = new { text = $"TradeSmart AI Audit | {analysis.AnalyzedAt:yyyy-MM-dd HH:mm:ss} UTC" },
 			timestamp = analysis.AnalyzedAt.ToString("o")
 		};
 
-		return new
-		{
-			username = "TradeSmart",
-			embeds = new[] { embed }
-		};
+		return new { username = "TradeSmart", embeds = new[] { embed } };
 	}
 
 	private static object BuildTradeOpenedPayload(PaperPosition position, PaperWallet wallet)
 	{
-		var directionEmoji = position.Direction == TradeDirection.Long
-			? "\U0001F7E2"  // 🟢
-			: "\U0001F534"; // 🔴
-
+		var directionEmoji = position.Direction == TradeDirection.Long ? "\U0001F7E2" : "\U0001F534";
 		var color = position.Direction == TradeDirection.Long ? 3066993 : 15158332;
 		var notional = position.PositionSizeUsd * position.Leverage;
 
@@ -255,38 +249,29 @@ public sealed class DiscordProxy : IDiscordProxy
 
 		if (!string.IsNullOrWhiteSpace(position.Reasoning))
 		{
-			var reasoning = position.Reasoning.Length > 1000
-				? position.Reasoning[..997] + "..."
-				: position.Reasoning;
-
+			var reasoning = position.Reasoning.Length > 1000 ? position.Reasoning[..997] + "..." : position.Reasoning;
 			fields.Add(new { name = "Analysis", value = reasoning, inline = false });
 		}
 
 		var embed = new
 		{
-			title = $"{directionEmoji} PAPER TRADE OPENED \u2014 {position.Symbol}",
+			title = $"{directionEmoji} TRADE OPENED \u2014 {position.Symbol}",
 			color,
 			fields,
-			footer = new { text = $"TradeSmart Paper Trading | {position.OpenedAt:yyyy-MM-dd HH:mm:ss} UTC" },
+			footer = new { text = $"TradeSmart | {position.OpenedAt:yyyy-MM-dd HH:mm:ss} UTC" },
 			timestamp = position.OpenedAt.ToString("o")
 		};
 
-		return new
-		{
-			username = "TradeSmart",
-			embeds = new[] { embed }
-		};
+		return new { username = "TradeSmart", embeds = new[] { embed } };
 	}
 
 	private static object BuildTradeClosedPayload(PaperPosition position, PaperWallet wallet)
 	{
 		var pnl = position.RealizedPnl ?? 0m;
 		var isProfit = pnl >= 0;
-		var pnlEmoji = isProfit ? "\U0001F7E2" : "\U0001F534"; // 🟢 or 🔴
+		var pnlEmoji = isProfit ? "\U0001F7E2" : "\U0001F534";
 		var color = isProfit ? 3066993 : 15158332;
-		var pnlPercent = position.PositionSizeUsd != 0
-			? pnl / position.PositionSizeUsd * 100
-			: 0;
+		var pnlPercent = position.PositionSizeUsd != 0 ? pnl / position.PositionSizeUsd * 100 : 0;
 
 		var duration = (position.ClosedAt ?? DateTimeOffset.UtcNow) - position.OpenedAt;
 		var durationText = duration.TotalHours >= 1
@@ -297,9 +282,7 @@ public sealed class DiscordProxy : IDiscordProxy
 			? (decimal)wallet.WinningTrades / wallet.TotalTrades * 100
 			: 0;
 
-		var directionEmoji = position.Direction == TradeDirection.Long
-			? "\U0001F7E2"
-			: "\U0001F534";
+		var directionEmoji = position.Direction == TradeDirection.Long ? "\U0001F7E2" : "\U0001F534";
 
 		var fields = new List<object>
 		{
@@ -317,17 +300,13 @@ public sealed class DiscordProxy : IDiscordProxy
 
 		var embed = new
 		{
-			title = $"{pnlEmoji} PAPER TRADE CLOSED \u2014 {position.Symbol} ({position.CloseReason})",
+			title = $"{pnlEmoji} TRADE CLOSED \u2014 {position.Symbol} ({position.CloseReason})",
 			color,
 			fields,
-			footer = new { text = $"TradeSmart Paper Trading | {(position.ClosedAt ?? DateTimeOffset.UtcNow):yyyy-MM-dd HH:mm:ss} UTC" },
+			footer = new { text = $"TradeSmart | {(position.ClosedAt ?? DateTimeOffset.UtcNow):yyyy-MM-dd HH:mm:ss} UTC" },
 			timestamp = (position.ClosedAt ?? DateTimeOffset.UtcNow).ToString("o")
 		};
 
-		return new
-		{
-			username = "TradeSmart",
-			embeds = new[] { embed }
-		};
+		return new { username = "TradeSmart", embeds = new[] { embed } };
 	}
 }

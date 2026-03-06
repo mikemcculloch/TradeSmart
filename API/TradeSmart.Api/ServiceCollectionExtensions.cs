@@ -13,5 +13,6 @@ public static class ServiceCollectionExtensions
 	public static void RegisterApiServices(this IServiceCollection services, IConfiguration configuration)
 	{
 		services.AddHostedService<TradeMonitorService>();
+		services.AddHostedService<KeepAliveService>();
 	}
 }

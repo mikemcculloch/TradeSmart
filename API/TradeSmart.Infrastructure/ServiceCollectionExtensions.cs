@@ -19,11 +19,15 @@ public static class ServiceCollectionExtensions
 		this IServiceCollection services,
 		IConfiguration configuration)
 	{
+		// SQLite database (singleton — manages connection + schema)
+		services.AddSingleton<TradeDatabase>();
+
 		// Proxies
 		services.AddScoped<ITwelveDataProxy, TwelveDataProxy>();
 		services.AddScoped<IClaudeProxy, ClaudeProxy>();
 		services.AddScoped<IDiscordProxy, DiscordProxy>();
-		services.AddScoped<IPaperTradingStateProxy, PaperTradingStateProxy>();
+		services.AddScoped<IPaperTradingStateProxy, SqlitePaperTradingStateProxy>();
+		services.AddScoped<ITradeHistoryProxy, SqliteTradeHistoryProxy>();
 		services.AddScoped<IBitunixProxy, BitunixProxy>();
 
 		// Twelve Data HTTP client with retry policy
