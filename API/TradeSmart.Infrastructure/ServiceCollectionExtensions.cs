@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
 		services.AddScoped<IClaudeProxy, ClaudeProxy>();
 		services.AddScoped<IDiscordProxy, DiscordProxy>();
 		services.AddScoped<IPaperTradingStateProxy, PaperTradingStateProxy>();
+		services.AddScoped<IBitunixProxy, BitunixProxy>();
 
 		// Twelve Data HTTP client with retry policy
 		services.AddHttpClient(Constants.TWELVE_DATA_HTTP_CLIENT_NAME)
@@ -40,6 +41,10 @@ public static class ServiceCollectionExtensions
 				client.DefaultRequestHeaders.Add("x-api-key", config.GetClaudeApiKey());
 				client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
 			})
+			.AddPolicyHandler(GetRetryPolicy());
+
+		// Bitunix HTTP client with retry policy
+		services.AddHttpClient(Constants.BITUNIX_HTTP_CLIENT_NAME)
 			.AddPolicyHandler(GetRetryPolicy());
 
 		return services;

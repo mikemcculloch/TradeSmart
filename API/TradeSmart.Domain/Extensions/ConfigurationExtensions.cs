@@ -117,4 +117,43 @@ public static class ConfigurationExtensions
 	{
 		return configuration.GetValue("PaperTrading:StateFilePath", "paper-trading-state.json")!;
 	}
+
+	// ── Trading Mode ────────────────────────────────────────────────────
+
+	/// <summary>Gets the active trading mode (Paper or Live).</summary>
+	public static TradeSmart.Domain.Entities.TradingMode GetTradingMode(this IConfiguration configuration)
+	{
+		var value = configuration.GetValue("Trading:Mode", "Paper");
+		return Enum.TryParse<TradeSmart.Domain.Entities.TradingMode>(value, ignoreCase: true, out var mode)
+			? mode
+			: TradeSmart.Domain.Entities.TradingMode.Paper;
+	}
+
+	// ── Bitunix ─────────────────────────────────────────────────────────
+
+	/// <summary>Gets the Bitunix API key.</summary>
+	public static string GetBitunixApiKey(this IConfiguration configuration)
+	{
+		return configuration.GetValue<string>("Bitunix:ApiKey")
+			?? throw new InvalidOperationException("Bitunix:ApiKey is not configured.");
+	}
+
+	/// <summary>Gets the Bitunix API secret.</summary>
+	public static string GetBitunixApiSecret(this IConfiguration configuration)
+	{
+		return configuration.GetValue<string>("Bitunix:ApiSecret")
+			?? throw new InvalidOperationException("Bitunix:ApiSecret is not configured.");
+	}
+
+	/// <summary>Gets the Bitunix API base URL.</summary>
+	public static string GetBitunixBaseUrl(this IConfiguration configuration, string? defaultValue = default)
+	{
+		return configuration.GetValue("Bitunix:BaseUrl", defaultValue ?? "https://fapi.bitunix.com");
+	}
+
+	/// <summary>Gets the Bitunix margin coin (default USDT).</summary>
+	public static string GetBitunixMarginCoin(this IConfiguration configuration, string? defaultValue = default)
+	{
+		return configuration.GetValue("Bitunix:MarginCoin", defaultValue ?? "USDT");
+	}
 }

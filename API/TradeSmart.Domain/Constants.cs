@@ -6,6 +6,7 @@ public static class Constants
 	public const string CLAUDE_HTTP_CLIENT_NAME = "ClaudeHttpClient";
 	public const string DISCORD_HTTP_CLIENT_NAME = "DiscordHttpClient";
 	public const string TWELVE_DATA_HTTP_CLIENT_NAME = "TwelveDataHttpClient";
+	public const string BITUNIX_HTTP_CLIENT_NAME = "BitunixHttpClient";
 
 	public static class ErrorCodes
 	{
@@ -24,6 +25,11 @@ public static class Constants
 		public const int POSITION_NOT_FOUND = 2005;
 		public const int INVALID_TRADE_PARAMETERS = 2006;
 		public const int SYMBOL_NOT_ALLOWED = 2007;
+
+		public const int BITUNIX_API_ERROR = 3000;
+		public const int BITUNIX_ORDER_REJECTED = 3001;
+		public const int BITUNIX_SIGNING_ERROR = 3002;
+		public const int LIVE_TRADING_DISABLED = 3003;
 	}
 
 	public static class PaperTrading
