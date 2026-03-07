@@ -38,6 +38,11 @@ msbuild.wrn
 # User secrets
 secrets.json
 
+# Publish / Deploy
+**/publish/
+deploy.zip
+*.zip
+
 # NuGet
 *.nupkg
 **/[Pp]ackages/*
