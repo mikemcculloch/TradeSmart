@@ -117,6 +117,201 @@ public sealed class TradeExecutionService : ITradeExecutionService
 	}
 
 	// ════════════════════════════════════════════════════════════════════
+	//  ExecuteSignalTradeAsync — signal-only execution (no SL/TP)
+	// ════════════════════════════════════════════════════════════════════
+
+	/// <inheritdoc />
+	public async Task<ProxyResponse<TradeExecutionResult>> ExecuteSignalTradeAsync(
+		TradingViewAlert alert,
+		CancellationToken cancellationToken = default)
+	{
+		var direction = alert.ParsedDirection;
+
+		if (direction == TradeDirection.NoTrade)
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = $"Could not determine direction from signal (direction={alert.Direction})",
+				Analysis = BuildAnalysisFromSignal(alert, direction)
+			});
+		}
+
+		var normalizedSymbol = SymbolNormalizer.Normalize(alert.Symbol);
+
+		// Build analysis with NO SL/TP — exits are purely signal-driven
+		var analysis = new TradeAnalysis
+		{
+			Symbol = normalizedSymbol,
+			Direction = direction,
+			Confidence = 100,
+			EntryPrice = alert.Price,
+			StopLoss = null,
+			TakeProfit = null,
+			Reasoning = $"Signal-only trade: {alert.Message}"
+		};
+
+		_logger.LogInformation(
+			"Executing signal-only trade: {Symbol} {Direction} @ {Price} (no SL/TP)",
+			normalizedSymbol, direction, alert.Price);
+
+		var tradingMode = _configuration.GetTradingMode();
+		return tradingMode switch
+		{
+			TradingMode.Live => await ExecuteSignalLiveTradeAsync(analysis, cancellationToken).ConfigureAwait(false),
+			_ => await ExecuteSignalPaperTradeAsync(analysis, cancellationToken).ConfigureAwait(false)
+		};
+	}
+
+	private async Task<ProxyResponse<TradeExecutionResult>> ExecuteSignalPaperTradeAsync(
+		TradeAnalysis analysis,
+		CancellationToken cancellationToken)
+	{
+		if (!_configuration.GetPaperTradingEnabled())
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = "Paper trading is disabled",
+				Analysis = analysis
+			});
+		}
+
+		var maxPositions = _configuration.GetSignalTradingMaxConcurrentPositions();
+		var openPositions = _paperTradingService.GetOpenPositions();
+
+		if (openPositions.Count >= maxPositions)
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = $"Maximum concurrent signal positions ({maxPositions}) reached",
+				Analysis = analysis
+			});
+		}
+
+		if (_paperTradingService.HasOpenPositionForSymbol(analysis.Symbol))
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = $"Already have an open position for {analysis.Symbol}",
+				Analysis = analysis
+			});
+		}
+
+		var openResult = await _paperTradingService.OpenPositionAsync(analysis, cancellationToken)
+			.ConfigureAwait(false);
+
+		if (openResult.HasErrors)
+		{
+			return ProxyResponse<TradeExecutionResult>.CreateError(
+				openResult.Error!.Code,
+				openResult.Error.Message);
+		}
+
+		_ = SendTradeOpenedNotificationAsync(openResult.Result!, cancellationToken);
+
+		return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+		{
+			TradeOpened = true,
+			Position = openResult.Result,
+			Analysis = analysis
+		});
+	}
+
+	private async Task<ProxyResponse<TradeExecutionResult>> ExecuteSignalLiveTradeAsync(
+		TradeAnalysis analysis,
+		CancellationToken cancellationToken)
+	{
+		_logger.LogInformation(
+			"Executing LIVE signal-only trade for {Symbol}: {Direction} @ {EntryPrice} (no SL/TP)",
+			analysis.Symbol, analysis.Direction, analysis.EntryPrice);
+
+		var bitunixSymbol = ToBitunixSymbol(analysis.Symbol);
+		var positionSizePercent = _configuration.GetSignalTradingPositionSizePercent();
+		var leverage = _configuration.GetSignalTradingLeverage();
+
+		var accountResult = await _bitunixProxy.GetAccountAsync(cancellationToken).ConfigureAwait(false);
+		if (accountResult.HasErrors)
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = $"Failed to get exchange account info: {accountResult.Error!.Message}",
+				Analysis = analysis
+			});
+		}
+
+		var availableBalance = accountResult.Result!.Available;
+		var positionSizeUsd = availableBalance * positionSizePercent;
+
+		if (positionSizeUsd <= 0)
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = "Insufficient exchange balance to open a new position",
+				Analysis = analysis
+			});
+		}
+
+		var entryPrice = analysis.EntryPrice!.Value;
+		var quantity = Math.Round(positionSizeUsd * leverage / entryPrice, 6);
+
+		var orderRequest = new BitunixOrderRequest
+		{
+			Symbol = bitunixSymbol,
+			Qty = quantity,
+			Side = analysis.Direction == TradeDirection.Long ? "BUY" : "SELL",
+			TradeSide = "OPEN",
+			OrderType = "MARKET"
+			// No TpPrice/SlPrice — exits are signal-driven
+		};
+
+		var orderResult = await _bitunixProxy.PlaceOrderAsync(orderRequest, cancellationToken)
+			.ConfigureAwait(false);
+
+		if (orderResult.HasErrors)
+		{
+			return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+			{
+				TradeOpened = false,
+				RejectionReason = $"Exchange order rejected: {orderResult.Error!.Message}",
+				Analysis = analysis
+			});
+		}
+
+		_logger.LogInformation(
+			"LIVE signal-only trade opened: {Symbol} {Direction} {Qty} @ MARKET, OrderId={OrderId}",
+			analysis.Symbol, analysis.Direction, quantity, orderResult.Result!.OrderId);
+
+		var position = new PaperPosition
+		{
+			PositionId = orderResult.Result.OrderId,
+			Symbol = analysis.Symbol,
+			Direction = analysis.Direction,
+			EntryPrice = entryPrice,
+			PositionSizeUsd = positionSizeUsd,
+			Quantity = quantity,
+			Leverage = leverage,
+			StopLoss = null,
+			TakeProfit = null,
+			Confidence = 100,
+			Reasoning = $"Signal-only trade: {analysis.Reasoning}"
+		};
+
+		_ = SendLiveTradeNotificationAsync(position, availableBalance, cancellationToken);
+
+		return ProxyResponse<TradeExecutionResult>.Success(new TradeExecutionResult
+		{
+			TradeOpened = true,
+			Position = position,
+			Analysis = analysis
+		});
+	}
+
+	// ════════════════════════════════════════════════════════════════════
 	//  ExecuteAsync — LEGACY: AI-analysis gated execution (kept for audit)
 	// ════════════════════════════════════════════════════════════════════
 
@@ -339,8 +534,8 @@ public sealed class TradeExecutionService : ITradeExecutionService
 			PositionSizeUsd = positionSizeUsd,
 			Quantity = quantity,
 			Leverage = leverage,
-			StopLoss = analysis.StopLoss!.Value,
-			TakeProfit = analysis.TakeProfit!.Value,
+			StopLoss = analysis.StopLoss,
+			TakeProfit = analysis.TakeProfit,
 			Confidence = analysis.Confidence,
 			Reasoning = analysis.Reasoning
 		};

@@ -187,8 +187,8 @@ public sealed class SqlitePaperTradingStateProxy : IPaperTradingStateProxy
 				PositionSizeUsd = (decimal)reader.GetDouble(reader.GetOrdinal("position_size_usd")),
 				Quantity = (decimal)reader.GetDouble(reader.GetOrdinal("quantity")),
 				Leverage = (decimal)reader.GetDouble(reader.GetOrdinal("leverage")),
-				StopLoss = (decimal)reader.GetDouble(reader.GetOrdinal("stop_loss")),
-				TakeProfit = (decimal)reader.GetDouble(reader.GetOrdinal("take_profit")),
+				StopLoss = reader.IsDBNull(reader.GetOrdinal("stop_loss")) ? null : (decimal)reader.GetDouble(reader.GetOrdinal("stop_loss")),
+				TakeProfit = reader.IsDBNull(reader.GetOrdinal("take_profit")) ? null : (decimal)reader.GetDouble(reader.GetOrdinal("take_profit")),
 				Confidence = reader.GetInt32(reader.GetOrdinal("confidence")),
 				Reasoning = reader.IsDBNull(reader.GetOrdinal("reasoning")) ? "" : reader.GetString(reader.GetOrdinal("reasoning")),
 				OpenedAt = DateTimeOffset.Parse(reader.GetString(reader.GetOrdinal("opened_at"))),
@@ -230,8 +230,8 @@ public sealed class SqlitePaperTradingStateProxy : IPaperTradingStateProxy
 		cmd.Parameters.AddWithValue("$size", (double)pos.PositionSizeUsd);
 		cmd.Parameters.AddWithValue("$qty", (double)pos.Quantity);
 		cmd.Parameters.AddWithValue("$leverage", (double)pos.Leverage);
-		cmd.Parameters.AddWithValue("$sl", (double)pos.StopLoss);
-		cmd.Parameters.AddWithValue("$tp", (double)pos.TakeProfit);
+		cmd.Parameters.AddWithValue("$sl", pos.StopLoss.HasValue ? (double)pos.StopLoss.Value : DBNull.Value);
+		cmd.Parameters.AddWithValue("$tp", pos.TakeProfit.HasValue ? (double)pos.TakeProfit.Value : DBNull.Value);
 		cmd.Parameters.AddWithValue("$confidence", pos.Confidence);
 		cmd.Parameters.AddWithValue("$reasoning", (object?)pos.Reasoning ?? DBNull.Value);
 		cmd.Parameters.AddWithValue("$opened", pos.OpenedAt.ToString("o"));

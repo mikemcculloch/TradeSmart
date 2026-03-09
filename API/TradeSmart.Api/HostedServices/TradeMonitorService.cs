@@ -130,21 +130,21 @@ public sealed class TradeMonitorService : BackgroundService
 				staleness.TotalMinutes);
 		}
 
-		// Evaluate SL/TP
+		// Evaluate SL/TP (skip for signal-only positions without SL/TP)
 		string? closeReason = null;
 
 		if (position.Direction == TradeDirection.Long)
 		{
-			if (currentPrice <= position.StopLoss)
+			if (position.StopLoss.HasValue && currentPrice <= position.StopLoss.Value)
 				closeReason = CloseReason.StopLoss;
-			else if (currentPrice >= position.TakeProfit)
+			else if (position.TakeProfit.HasValue && currentPrice >= position.TakeProfit.Value)
 				closeReason = CloseReason.TakeProfit;
 		}
 		else // Short
 		{
-			if (currentPrice >= position.StopLoss)
+			if (position.StopLoss.HasValue && currentPrice >= position.StopLoss.Value)
 				closeReason = CloseReason.StopLoss;
-			else if (currentPrice <= position.TakeProfit)
+			else if (position.TakeProfit.HasValue && currentPrice <= position.TakeProfit.Value)
 				closeReason = CloseReason.TakeProfit;
 		}
 

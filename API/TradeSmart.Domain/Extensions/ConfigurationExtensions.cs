@@ -156,4 +156,24 @@ public static class ConfigurationExtensions
 	{
 		return configuration.GetValue("Bitunix:MarginCoin", defaultValue ?? "USDT");
 	}
+
+	// ── Signal Trading ──────────────────────────────────────────────────
+
+	/// <summary>Gets the signal trading position size percent (0.0-1.0). Default 1.0 = 100%.</summary>
+	public static decimal GetSignalTradingPositionSizePercent(this IConfiguration configuration)
+	{
+		return configuration.GetValue("SignalTrading:PositionSizePercent", 1.0m);
+	}
+
+	/// <summary>Gets the signal trading leverage. Default 1.0 = spot/no leverage.</summary>
+	public static decimal GetSignalTradingLeverage(this IConfiguration configuration)
+	{
+		return configuration.GetValue("SignalTrading:Leverage", 1.0m);
+	}
+
+	/// <summary>Gets the max concurrent positions for signal trading. Default 1.</summary>
+	public static int GetSignalTradingMaxConcurrentPositions(this IConfiguration configuration)
+	{
+		return configuration.GetValue("SignalTrading:MaxConcurrentPositions", 1);
+	}
 }

@@ -10,8 +10,8 @@ public sealed record PaperPositionDto
 	public decimal PositionSizeUsd { get; init; }
 	public decimal Quantity { get; init; }
 	public decimal Leverage { get; init; }
-	public decimal StopLoss { get; init; }
-	public decimal TakeProfit { get; init; }
+	public decimal? StopLoss { get; init; }
+	public decimal? TakeProfit { get; init; }
 	public int Confidence { get; init; }
 	public DateTimeOffset OpenedAt { get; init; }
 	public DateTimeOffset? ClosedAt { get; init; }

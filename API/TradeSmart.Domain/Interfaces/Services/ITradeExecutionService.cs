@@ -28,4 +28,15 @@ public interface ITradeExecutionService
 	Task<ProxyResponse<bool>> CloseFromSignalAsync(
 		TradingViewAlert alert,
 		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Executes a trade from a signal-only strategy (no SL/TP, 100% position sizing).
+	/// Uses SignalTrading config section for position sizing and leverage.
+	/// </summary>
+	/// <param name="alert">The incoming alert with direction and price (no SL/TP expected).</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>The execution result.</returns>
+	Task<ProxyResponse<TradeExecutionResult>> ExecuteSignalTradeAsync(
+		TradingViewAlert alert,
+		CancellationToken cancellationToken = default);
 }

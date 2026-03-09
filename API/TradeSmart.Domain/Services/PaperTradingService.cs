@@ -85,12 +85,12 @@ public sealed class PaperTradingService : IPaperTradingService, IDisposable
 					"Cannot open a position with NoTrade direction.");
 			}
 
-			// Validate required price levels
-			if (!analysis.EntryPrice.HasValue || !analysis.StopLoss.HasValue || !analysis.TakeProfit.HasValue)
+			// Validate entry price (SL/TP are optional for signal-only positions)
+			if (!analysis.EntryPrice.HasValue)
 			{
 				return ProxyResponse<PaperPosition>.CreateError(
 					Constants.ErrorCodes.INVALID_TRADE_PARAMETERS,
-					"Missing required price levels (entry, stop-loss, or take-profit).");
+					"Missing required entry price.");
 			}
 
 			// Check concurrent position limit
@@ -124,9 +124,10 @@ public sealed class PaperTradingService : IPaperTradingService, IDisposable
 			var leverage = _configuration.GetPaperTradingLeverage();
 			var entryPrice = analysis.EntryPrice.Value;
 
-			// Enforce stop-loss cap
-			var effectiveStopLoss = CalculateEffectiveStopLoss(
-				analysis.Direction, entryPrice, analysis.StopLoss.Value);
+			// Enforce stop-loss cap only when SL is provided
+			decimal? effectiveStopLoss = analysis.StopLoss.HasValue
+				? CalculateEffectiveStopLoss(analysis.Direction, entryPrice, analysis.StopLoss.Value)
+				: null;
 
 			// Calculate quantity (notional / entry price)
 			var quantity = positionSizeUsd * leverage / entryPrice;
@@ -140,7 +141,7 @@ public sealed class PaperTradingService : IPaperTradingService, IDisposable
 				Quantity = quantity,
 				Leverage = leverage,
 				StopLoss = effectiveStopLoss,
-				TakeProfit = analysis.TakeProfit.Value,
+				TakeProfit = analysis.TakeProfit,
 				Confidence = analysis.Confidence,
 				Reasoning = analysis.Reasoning
 			};

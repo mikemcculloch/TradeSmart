@@ -24,11 +24,11 @@ public sealed record PaperPosition
 	/// <summary>Leverage multiplier applied.</summary>
 	public decimal Leverage { get; init; }
 
-	/// <summary>Stop-loss price.</summary>
-	public decimal StopLoss { get; init; }
+	/// <summary>Stop-loss price. Null for signal-only positions.</summary>
+	public decimal? StopLoss { get; init; }
 
-	/// <summary>Take-profit price.</summary>
-	public decimal TakeProfit { get; init; }
+	/// <summary>Take-profit price. Null for signal-only positions.</summary>
+	public decimal? TakeProfit { get; init; }
 
 	/// <summary>AI confidence level (0-100) at time of opening.</summary>
 	public int Confidence { get; init; }

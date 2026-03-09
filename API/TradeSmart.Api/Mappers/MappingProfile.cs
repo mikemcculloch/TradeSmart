@@ -11,6 +11,12 @@ public sealed class MappingProfile : Profile
 	{
 		CreateMap<TradingViewAlertRequestDto, TradingViewAlert>();
 
+		CreateMap<StrategySignalRequestDto, TradingViewAlert>()
+			.ForMember(dest => dest.StopLoss, opt => opt.Ignore())
+			.ForMember(dest => dest.TakeProfit, opt => opt.Ignore())
+			.ForMember(dest => dest.Exchange, opt => opt.Ignore())
+			.ForMember(dest => dest.Action, opt => opt.Ignore());
+
 		CreateMap<TradeAnalysis, TradeAnalysisResponseDto>()
 			.ForMember(dest => dest.Direction, opt => opt.MapFrom(src => src.Direction.ToString()));
 
